@@ -19,7 +19,8 @@ buffer db 128 dup(0)
 mas1 dd 21, 7, 2, 3, 5, 569 ; выделяем 4 байта
 mas2 dd 3415, 3205, 15, 6, 1410, 390, 100, 10, 1, 2
 
-temp dd ?
+temp1 dd ?
+temp2 dd ?
 
 data ends
 text segment
@@ -31,8 +32,9 @@ mov esi, 0
 mov eax, mas1[esi] ; вместо AX т.к. 32-битные числа. rax - для 64-битных
 add esi, 4
 
-cdq
+cdq ; какие виды, для чего, в каких случаях
 div mas1[esi]
+add esi, 4
 
 ; 2 + 3
 mov ebx, mas1[esi]
@@ -41,6 +43,7 @@ add ebx, mas1[esi]
 add esi, 4
 
 ; 21/7 * (2 + 3)
+cdq
 mul ebx
 xor ebx, ebx
 
@@ -50,7 +53,7 @@ add esi, 4
 
 ; 21/7 * (2 + 3) - 5 + 569
 add eax, mas1[esi]
-mov [temp], eax ; Сохраняем
+mov [temp1], eax ; Сохраняем
 
 ; Уравнение 2
 xor eax, eax
@@ -67,11 +70,13 @@ mov ebx, mas2[esi]
 add esi, 4
 add ebx, mas2[esi]
 add esi, 4
-; cdq ??
 
 ; (2950 - 950) / (15 + 6)
+cdq
 div ebx
-xchg eax, ebx ; Промежуточный результат в ebx
+mov [temp2], eax ; Промежуточный результат в temp2
+xor eax, eax
+xor ebx, ebx
 
 ; 1410 + 390
 mov eax, mas2[esi]
@@ -80,30 +85,31 @@ add eax, mas2[esi]
 add esi, 4
 
 ; 100 - 10
-mov edx, mas2[esi]
+mov ebx, mas2[esi]
 add esi, 4
-sub edx, mas2[esi]
+sub ebx, mas2[esi]
 add esi, 4
 
 ; (1410 + 390) / (100 - 10)
-;cdq
-div edx ; возникает ошибка
+cdq
+div ebx ; возникает ошибка
+xor ebx, ebx
 
 ; (2950 - 950) / (15 + 6) * (1410 + 390) / (100 - 10)
-;mul ebx
-;xchg eax, ebx ; Промежуточный результат в ebx
-
-; 1/2
-;mov eax, mas2[esi]
-;add esi, 4
-;cdq
-;div mas2[esi]
+cdq
+mul [temp2]
 
 ; (2950 - 950) / (15 + 6) * (1410 + 390) / (100 - 10) * 1/2
-;mul ebx
-;xchg eax, ebx ; Результат второго уравнения в ebx
+add esi, 4 ; 2
+cdq
+div mas2[esi]
+mov [temp2], eax
 
-mov eax, [temp] ; Возвращаем значение
+xor eax, eax
+xor ebx, ebx
+
+mov eax, [temp1] ; Возвращаем значение
+mov ebx, [temp2]
 
 
 invoke wsprintfA, addr buffer, addr format, mas1[0], mas1[4], mas1[8], mas1[12], mas1[16], mas1[20], eax,
